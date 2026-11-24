@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Big Bend Trail Vote</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap">
+<style>
+/* Layout: ranked verdict first, then one voting card per trail; distance bars share one scale (12.4 mi). */
+:root {
+  --bg: #e2f4f2;
+  --surface: #f2fbfa;
+  --ink: #11353b;
+  --muted: #47696d;
+  --line: #b9dad8;
+  --accent: #16757b;
+  --accent-ink: #ffffff;
+  --accent-soft: #c4ebe8;
+  --easy: #3b7a57;
+  --mod: #a8741a;
+  --hard: #a3412a;
+  --out: #8b9293;
+  --font-display: "Barlow Condensed", "Arial Narrow", Arial, sans-serif;
+  --font-body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b2123;
+    --surface: #11302f;
+    --ink: #e2f6f4;
+    --muted: #8fbdbb;
+    --line: #234a49;
+    --accent: #6fd6d0;
+    --accent-ink: #06201f;
+    --accent-soft: #16403f;
+    --easy: #6cb98b;
+    --mod: #d9a54a;
+    --hard: #e0846b;
+    --out: #7b8789;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0b2123;
+  --surface: #11302f;
+  --ink: #e2f6f4;
+  --muted: #8fbdbb;
+  --line: #234a49;
+  --accent: #6fd6d0;
+  --accent-ink: #06201f;
+  --accent-soft: #16403f;
+  --easy: #6cb98b;
+  --mod: #d9a54a;
+  --hard: #e0846b;
+  --out: #7b8789;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 48px;
+}
+.wrap { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 700; letter-spacing: 0.01em; margin: 0; text-wrap: balance; }
+h1 { font-size: 2.4rem; line-height: 1; text-transform: uppercase; }
+h2 { font-size: 1.5rem; line-height: 1.1; }
+h3 { font-size: 1.45rem; line-height: 1.1; }
+p { margin: 0; }
+.eyebrow { font-family: var(--font-display); font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.85rem; color: var(--accent); }
+.lede { color: var(--muted); max-width: 60ch; margin-top: 8px; }
+header { display: flex; flex-direction: column; gap: 6px; }
+
+.status { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); font-size: 0.875rem; font-variant-numeric: tabular-nums; }
+.chip b { font-weight: 600; }
+.chip.done { border-color: var(--accent); color: var(--accent); }
+.note { padding: 10px 12px; border: 1px solid var(--line); border-left: 4px solid var(--mod); background: var(--surface); font-size: 0.9rem; }
+.note:empty { display: none; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+.best { display: flex; flex-direction: column; gap: 4px; }
+.best .name { font-family: var(--font-display); font-size: 2rem; font-weight: 700; line-height: 1.05; }
+.best .why { color: var(--muted); }
+.rank { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.rank li { display: grid; grid-template-columns: 2rem minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.rank li:first-child { border-top: 0; }
+.pos { font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+.rname { font-weight: 600; }
+.rsub { grid-column: 2 / 4; color: var(--muted); font-size: 0.875rem; }
+.total { font-family: var(--font-display); font-size: 1.4rem; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+.total small { font-size: 0.8rem; color: var(--muted); font-weight: 500; }
+.bar { grid-column: 2 / 4; height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--accent); }
+.sub-h { font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.85rem; color: var(--muted); font-weight: 600; }
+.out-list { margin: 0; padding-left: 1.1rem; color: var(--muted); }
+.shortlist { padding: 10px 12px; background: var(--accent-soft); border-radius: 4px; font-size: 0.95rem; }
+
+.cards { display: flex; flex-direction: column; gap: 14px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.card.is-out { opacity: 0.72; }
+.card-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; }
+.miles { font-family: var(--font-display); font-size: 1.4rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.miles small { font-size: 0.85rem; color: var(--muted); font-weight: 500; }
+.dist { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; }
+.dist > i { display: block; height: 100%; background: var(--accent); }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; font-size: 0.9rem; }
+.diff { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.diff::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
+.lv1 { --c: var(--easy); } .lv2 { --c: var(--mod); } .lv3 { --c: var(--hard); }
+.view { color: var(--muted); }
+.photo { display: flex; flex-direction: column; gap: 8px; }
+.photo img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 4px; display: block; background: var(--line); }
+.photo-add { font: inherit; width: 100%; height: 84px; border: 1.5px dashed var(--line); background: var(--bg); color: var(--accent); border-radius: 4px; cursor: pointer; font-weight: 600; padding: 0 12px; }
+.photo-add:hover:not(:disabled) { border-color: var(--accent); }
+.photo-add:disabled { opacity: 0.6; cursor: default; }
+.photo-actions { display: flex; gap: 16px; }
+.photo-actions button { font: inherit; font-size: 0.85rem; background: none; border: 0; padding: 0; color: var(--accent); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.photo-actions button:disabled { opacity: 0.6; cursor: default; }
+.row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 8px 16px; }
+.row details { min-width: 0; flex: 1 1 14rem; }
+.alltrails { color: var(--accent); font-weight: 600; font-size: 0.9rem; text-decoration: underline; text-underline-offset: 3px; }
+.alltrails:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+details summary { cursor: pointer; font-size: 0.9rem; color: var(--accent); font-weight: 600; }
+details ul { margin: 8px 0 0; padding-left: 1.1rem; color: var(--muted); font-size: 0.925rem; }
+.scores { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.scores button {
+  font: inherit; font-size: 0.85rem; padding: 8px 2px; border: 1px solid var(--line); border-radius: 4px;
+  background: var(--bg); color: var(--ink); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 0;
+  min-height: 52px; justify-content: center;
+}
+.scores button b { font-family: var(--font-display); font-size: 1.25rem; line-height: 1.1; }
+.scores button:hover:not(:disabled) { border-color: var(--accent); }
+.scores button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.scores button.veto[aria-pressed="true"] { background: var(--hard); border-color: var(--hard); color: var(--bg); }
+.scores button:disabled { cursor: default; opacity: 0.6; }
+button:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.others { font-size: 0.875rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.legend { color: var(--muted); font-size: 0.875rem; }
+@media (max-width: 420px) {
+  h1 { font-size: 2rem; }
+  .scores button { font-size: 0.75rem; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .dist > i, .bar > i { transition: width 0.25s ease; }
+}
+html { color-scheme: light dark; }
+body { margin: 0; }
+[hidden] { display: none !important; }
+.sync { gap: 18px; }
+.steps { display: flex; flex-direction: column; gap: 18px; }
+.step { display: flex; flex-direction: column; gap: 8px; }
+.step h3 { font-size: 1.2rem; }
+.msg { font-size: 0.9rem; color: var(--muted); }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+textarea, input[type="text"] { font: inherit; font-size: 0.9rem; width: 100%; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); color: var(--ink); padding: 9px 10px; }
+textarea { min-height: 76px; resize: vertical; word-break: break-all; }
+textarea:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.btn { font: inherit; font-weight: 600; padding: 9px 14px; border-radius: 4px; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--accent); }
+.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Big Bend National Park</span>
+    <h1>Big Bend Trail Vote</h1>
+    <p class="lede">Score each of the five trails from 0 to 4. A 0 is a veto and takes the trail out. This file works offline and keeps your scores on this device. To compare, you each send the other a short vote code.</p>
+  </header>
+  <div class="status" id="status"></div>
+  <section class="panel" id="results" aria-live="polite"></section>
+
+  <section class="panel sync">
+    <h2>Compare your votes</h2>
+    <div class="steps">
+      <div class="step">
+        <h3><label for="name">1. Your name</label></h3>
+        <input type="text" id="name" maxlength="40" placeholder="Your first name" autocomplete="off">
+      </div>
+      <div class="step">
+        <h3><label for="mycode">2. Send your votes</label></h3>
+        <p class="msg">After you score the trails, copy this code and text it to your partner.</p>
+        <textarea id="mycode" readonly placeholder="Score at least one trail to get your code."></textarea>
+        <div class="actions"><button class="btn" id="copy" type="button">Copy my code</button></div>
+        <p class="msg" id="copymsg"></p>
+      </div>
+      <div class="step">
+        <h3><label for="theircode">3. Add your partner's votes</label></h3>
+        <textarea id="theircode" placeholder="Paste their code here. It starts with BB1:"></textarea>
+        <div class="actions">
+          <button class="btn" id="add" type="button">Add their votes</button>
+          <button class="btn ghost" id="clear" type="button">Remove their votes</button>
+        </div>
+        <p class="msg" id="syncmsg"></p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <p class="legend" style="margin-bottom:10px">Scale: 0 No way · 1 Meh · 2 Fine · 3 Want · 4 Must. Distance bars share one scale, longest is 12.4 miles.</p>
+    <div class="cards" id="cards"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  var TRAILS = [
+    { id: 'boquillas', name: 'Boquillas Canyon Trail', miles: 1.4, url: 'https://www.alltrails.com/trail/us/texas/boquillas-canyon-trail', diff: 'Easy to Moderate', lvl: 1,
+      best: 'The Rio Grande framed by the tall canyon walls.',
+      notes: ['Walk alongside the Rio Grande through a limestone canyon.', 'Look for fossils embedded in the canyon walls.', 'The trail leads down toward the river with views of the canyon walls around it.', 'Great for scenic photos.'] },
+    { id: 'lostmine', name: 'Lost Mine Trail', miles: 4.8, url: 'https://www.alltrails.com/trail/us/texas/lost-mine-trail', diff: 'Moderate to Strenuous', lvl: 2,
+      best: 'The mountain and desert panorama from the upper trail.',
+      notes: ['One of the best panoramic hikes in Big Bend.', 'Views of the Chisos Mountains and the surrounding desert.', 'Best mountain and valley scenery near the upper portions.'] },
+    { id: 'window', name: 'Window Trail', miles: 5.6, url: 'https://www.alltrails.com/trail/us/texas/the-window-trail', diff: 'Moderate to Strenuous', lvl: 2,
+      best: 'The desert landscape framed through the Window rock formation.',
+      notes: ['Hike through the Chisos Basin toward the Window formation.', 'Ends at a rock opening overlooking the desert below.', 'Rock formations and mountain scenery along the way.', 'The view through the Window is a major photo spot.'] },
+    { id: 'southrim', name: 'South Rim Trail', miles: 12.4, url: 'https://www.alltrails.com/trail/us/texas/south-rim-trail-loop', diff: 'Hard', lvl: 3,
+      best: 'The South Rim overlook with the desert stretching into the distance.',
+      notes: ['One of the most spectacular viewpoints in Big Bend.', 'Views from the edge of the Chisos Mountains over the desert.', 'Long and challenging, with a big scenic payoff.'] },
+    { id: 'emory', name: 'Emory Peak', miles: 10.1, url: 'https://www.alltrails.com/trail/us/texas/emory-peak-trail', diff: 'Strenuous', lvl: 3,
+      best: 'The panoramic summit view from Emory Peak.',
+      notes: ['Hike to the highest point in Big Bend National Park.', 'Views across the Chisos Mountains and the surrounding desert.', 'The last section is a rocky scramble to the summit.', 'A full-day adventure.'] }
+  ];
+  var MAXMI = 12.4;
+  var LABELS = ['No way', 'Meh', 'Fine', 'Want', 'Must'];
+
+  function load(k, d) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
+  function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+  var myName = String(load('bb_name', '') || '');
+  var mine = load('bb_mine', {}) || {};
+  var partner = load('bb_partner', null);
+
+  var $status = document.getElementById('status');
+  var $results = document.getElementById('results');
+  var $cards = document.getElementById('cards');
+  var $name = document.getElementById('name');
+  var $mycode = document.getElementById('mycode');
+  var $their = document.getElementById('theircode');
+  var $syncmsg = document.getElementById('syncmsg');
+  var $copymsg = document.getElementById('copymsg');
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function add(parent) {
+    for (var i = 1; i < arguments.length; i++) if (arguments[i]) parent.appendChild(arguments[i]);
+    return parent;
+  }
+  function fmt(n) { return (Math.round(n * 10) / 10).toString(); }
+  function isNum(v) { return typeof v === 'number' && isFinite(v); }
+  function countScored(s) { var c = 0; TRAILS.forEach(function (t) { if (s && isNum(s[t.id])) c++; }); return c; }
+  function partnerLabel() { return (partner && partner.name) || 'Partner'; }
+
+  function analyze() {
+    var voters = [{ label: 'You', scores: mine }];
+    if (partner && countScored(partner.scores) > 0) voters.push({ label: partnerLabel(), scores: partner.scores });
+    var rows = TRAILS.map(function (t) {
+      var vals = voters.map(function (v) { return v.scores[t.id]; });
+      var complete = voters.length >= 2 && vals.every(isNum);
+      var out = complete && vals.some(function (v) { return v === 0; });
+      var sum = 0, min = 0;
+      if (complete) { sum = vals.reduce(function (a, b) { return a + b; }, 0); min = Math.min.apply(null, vals); }
+      return { t: t, vals: vals, complete: complete, out: out, sum: sum, min: min };
+    });
+    var ranked = rows.filter(function (r) { return r.complete && !r.out; }).sort(function (a, b) {
+      return (b.sum - a.sum) || (b.min - a.min) || (a.t.miles - b.t.miles);
+    });
+    return { voters: voters, rows: rows, ranked: ranked,
+      out: rows.filter(function (r) { return r.out; }),
+      pending: rows.filter(function (r) { return !r.complete; }) };
+  }
+  function verdict(r) {
+    if (r.min >= 3) return 'Both keen';
+    if (r.min === 2) return 'Fine for both';
+    return 'One of you is lukewarm';
+  }
+  function scoreLine(a, r) {
+    return a.voters.map(function (v, i) { return v.label + ' ' + r.vals[i]; }).join(' · ');
+  }
+
+  function renderStatus() {
+    $status.textContent = '';
+    var c1 = countScored(mine);
+    var chip = el('span', 'chip' + (c1 === TRAILS.length ? ' done' : ''));
+    add(chip, el('b', null, 'You'), document.createTextNode(c1 + ' of ' + TRAILS.length + ' scored'));
+    $status.appendChild(chip);
+    if (partner) {
+      var c2 = countScored(partner.scores);
+      var chip2 = el('span', 'chip' + (c2 === TRAILS.length ? ' done' : ''));
+      add(chip2, el('b', null, partnerLabel()), document.createTextNode(c2 + ' of ' + TRAILS.length + ' scored'));
+      $status.appendChild(chip2);
+    }
+  }
+
+  function renderResults() {
+    var a = analyze();
+    $results.textContent = '';
+    var myDone = countScored(mine) === TRAILS.length;
+    if (!myDone) {
+      add($results, el('h2', null, 'Your turn'),
+        el('p', 'lede', 'Score all five trails to see the combined ranking. You have scored ' + countScored(mine) + ' of ' + TRAILS.length + '. Your partner’s scores stay out of view until you finish, so neither of you anchors on the other.'));
+      return;
+    }
+    if (a.voters.length < 2) {
+      add($results, el('h2', null, 'Now add your partner’s votes'),
+        el('p', 'lede', 'Send your code from step 2 below, then paste theirs into step 3. The ranking appears as soon as both are in.'));
+      return;
+    }
+    if (a.pending.length === TRAILS.length) {
+      add($results, el('h2', null, 'No match yet'), el('p', 'lede', 'Your partner’s code has no scores for these trails.'));
+      return;
+    }
+    if (!a.ranked.length) {
+      add($results, el('h2', null, 'No match yet'),
+        el('p', 'lede', a.pending.length ? partnerLabel() + ' still has ' + a.pending.length + ' to score.' : 'Every trail has a veto. Change a 0 to a 1 on the trail you could live with.'));
+    } else {
+      var top = a.ranked[0];
+      var best = el('div', 'best');
+      add(best, el('span', 'eyebrow', a.pending.length ? 'Leading so far' : 'Best match'), el('div', 'name', top.t.name),
+        el('p', 'why', verdict(top) + ' · ' + scoreLine(a, top) + ' · ' + fmt(top.t.miles) + ' mi'));
+      $results.appendChild(best);
+      var list = el('ol', 'rank');
+      var maxSum = 4 * a.voters.length;
+      a.ranked.forEach(function (r, i) {
+        var li = el('li');
+        var tot = el('div', 'total', String(r.sum));
+        add(tot, el('small', null, ' / ' + maxSum));
+        var bar = el('div', 'bar'); var fill = el('i'); fill.style.width = (r.sum / maxSum * 100) + '%'; bar.appendChild(fill);
+        add(li, el('span', 'pos', String(i + 1)), el('span', 'rname', r.t.name), tot,
+          el('span', 'rsub', verdict(r) + ' · ' + scoreLine(a, r)), bar);
+        list.appendChild(li);
+      });
+      $results.appendChild(list);
+      var take = a.ranked.slice(0, 3);
+      var miles = take.reduce(function (s, r) { return s + r.t.miles; }, 0);
+      if (take.length > 1) $results.appendChild(el('p', 'shortlist', 'Your top ' + take.length + ' add up to ' + fmt(miles) + ' miles of hiking.'));
+    }
+    if (a.out.length) {
+      var ul = el('ul', 'out-list');
+      a.out.forEach(function (r) {
+        var who = a.voters.filter(function (v, i) { return r.vals[i] === 0; }).map(function (v) { return v.label; }).join(' and ');
+        ul.appendChild(el('li', null, r.t.name + ' (' + who + ' said no way)'));
+      });
+      add($results, el('div', 'sub-h', 'Vetoed'), ul);
+    }
+    if (a.pending.length && a.ranked.length) {
+      $results.appendChild(el('p', 'legend', 'Not ranked yet, still waiting on scores: ' + a.pending.map(function (r) { return r.t.name; }).join(', ') + '.'));
+    }
+  }
+
+  function renderCards() {
+    var a = analyze();
+    var myDone = countScored(mine) === TRAILS.length;
+    var outIds = {};
+    a.out.forEach(function (r) { outIds[r.t.id] = true; });
+    $cards.textContent = '';
+    TRAILS.forEach(function (t) {
+      var card = el('article', 'card' + (outIds[t.id] ? ' is-out' : ''));
+      var top = el('div', 'card-top');
+      var m = el('div', 'miles', fmt(t.miles)); m.appendChild(el('small', null, ' mi'));
+      add(top, el('h3', null, t.name), m);
+      var dist = el('div', 'dist'); var f = el('i'); f.style.width = (t.miles / MAXMI * 100) + '%'; dist.appendChild(f);
+      var meta = el('div', 'meta'); add(meta, el('span', 'diff lv' + t.lvl, t.diff));
+      var best = el('p', 'view', 'Best view: ' + t.best);
+      var det = el('details'); var ul = el('ul'); t.notes.forEach(function (n) { ul.appendChild(el('li', null, n)); });
+      add(det, el('summary', null, 'Highlights'), ul);
+      var link = el('a', 'alltrails', 'View on AllTrails');
+      link.href = t.url; link.target = '_blank'; link.rel = 'noopener noreferrer';
+      var row = el('div', 'row'); add(row, det, link);
+
+      var scores = el('div', 'scores'); scores.setAttribute('role', 'group'); scores.setAttribute('aria-label', 'Your score for ' + t.name);
+      LABELS.forEach(function (lab, v) {
+        var b = el('button', v === 0 ? 'veto' : '');
+        b.type = 'button'; b.id = 'score-' + t.id + '-' + v;
+        b.setAttribute('aria-pressed', mine[t.id] === v ? 'true' : 'false');
+        add(b, el('b', null, String(v)), el('span', null, lab));
+        b.addEventListener('click', function () { setScore(t.id, v); });
+        scores.appendChild(b);
+      });
+      add(card, top, dist, meta, best, row, scores);
+      if (myDone && partner && isNum(partner.scores[t.id])) {
+        card.appendChild(el('p', 'others', partnerLabel() + ': ' + partner.scores[t.id] + ' (' + LABELS[partner.scores[t.id]] + ')'));
+      }
+      $cards.appendChild(card);
+    });
+  }
+
+  function myCode() {
+    if (!countScored(mine)) return '';
+    var o = { n: myName || 'Partner', s: mine };
+    return 'BB1:' + btoa(unescape(encodeURIComponent(JSON.stringify(o))));
+  }
+  function updateCode() { $mycode.value = myCode(); }
+  function render() { renderStatus(); renderResults(); renderCards(); updateCode(); }
+
+  function setScore(id, v) { mine[id] = v; save('bb_mine', mine); render(); $copymsg.textContent = ''; }
+
+  $name.value = myName;
+  $name.addEventListener('input', function () { myName = $name.value.slice(0, 40); save('bb_name', myName); updateCode(); });
+
+  document.getElementById('copy').addEventListener('click', function () {
+    var code = myCode();
+    if (!code) { $copymsg.textContent = 'Score at least one trail first.'; return; }
+    function fallback() {
+      $mycode.focus(); $mycode.select();
+      $copymsg.textContent = 'Select and copy the code above (it is highlighted).';
+    }
+    try {
+      navigator.clipboard.writeText(code).then(function () { $copymsg.textContent = 'Copied. Paste it into a text message.'; }, fallback);
+    } catch (e) { fallback(); }
+  });
+
+  document.getElementById('add').addEventListener('click', function () {
+    var raw = $their.value.replace(/\s+/g, '');
+    var m = /^BB1:([A-Za-z0-9+\/=]+)$/.exec(raw);
+    if (!m) { $syncmsg.textContent = 'That does not look like a vote code. Copy the whole code, starting with BB1:.'; return; }
+    if (raw === myCode()) { $syncmsg.textContent = 'That is your own code. Paste the one your partner sent you.'; return; }
+    var o;
+    try { o = JSON.parse(decodeURIComponent(escape(atob(m[1])))); } catch (e) { $syncmsg.textContent = 'That code is damaged. Ask your partner to copy it again.'; return; }
+    var s = {};
+    TRAILS.forEach(function (t) { var v = o && o.s && o.s[t.id]; if (isNum(v) && v >= 0 && v <= 4) s[t.id] = Math.round(v); });
+    if (!countScored(s)) { $syncmsg.textContent = 'That code has no scores in it.'; return; }
+    partner = { name: String((o && o.n) || '').slice(0, 40) || 'Partner', scores: s };
+    save('bb_partner', partner);
+    $their.value = '';
+    $syncmsg.textContent = 'Added ' + partner.name + '’s votes (' + countScored(s) + ' of ' + TRAILS.length + ' scored).';
+    render();
+  });
+
+  document.getElementById('clear').addEventListener('click', function () {
+    partner = null; save('bb_partner', null); $syncmsg.textContent = 'Their votes are removed.'; render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
