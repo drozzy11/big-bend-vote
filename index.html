@@ -389,8 +389,13 @@ textarea:focus-visible, input:focus-visible { outline: 3px solid var(--accent); 
         scores.appendChild(b);
       });
       var img = el('img', 'trail-img');
-      img.src = 'images/' + t.id + '.jpg'; img.alt = t.name + ' photo'; img.loading = 'lazy';
-      img.addEventListener('error', function () { if (img.parentNode) img.parentNode.removeChild(img); });
+      var tries = ['jpg', 'jpeg', 'png', 'webp', 'JPG', 'JPEG', 'PNG', 'WEBP'], ti = 0;
+      img.src = 'images/' + t.id + '.' + tries[0]; img.alt = t.name + ' photo';
+      img.addEventListener('error', function () {
+        ti++;
+        if (ti < tries.length) img.src = 'images/' + t.id + '.' + tries[ti];
+        else if (img.parentNode) img.parentNode.removeChild(img);
+      });
       add(card, img, top, dist, meta, best, row, scores);
       if (myDone && partner && isNum(partner.scores[t.id])) {
         card.appendChild(el('p', 'others', partnerLabel() + ': ' + partner.scores[t.id] + ' (' + LABELS[partner.scores[t.id]] + ')'));
